@@ -4,7 +4,16 @@ import (
 	"container/heap"
 	"math"
 	"sort"
+	"sync"
 )
+
+// This pool allows us to reuse Event structs instead of allocating new ones on the
+// heap for every endpoint and intersection. This dramatically reduces GC pressure.
+var eventPool = sync.Pool{
+	New: func() any {
+		return &Event{}
+	},
+}
 
 // CountIntersections implements the Bentley-Ottmann algorithm to find the total
 // number of intersection points in a given set of line segments.
@@ -22,7 +31,9 @@ import (
 // segments intersecting at a single point.
 func CountIntersections(segments []Segment) int {
 	// The event queue stores all segment endpoints to initialize the sweep.
-	eq := make(EventQueue, 0)
+	// Pre-allocate the event queue with a known initial size.
+	// Each segment generates two initial events (start and end).
+	eq := make(EventQueue, 0, len(segments)*2)
 	segmentCopies := make([]Segment, len(segments))
 	copy(segmentCopies, segments)
 
@@ -33,12 +44,27 @@ func CountIntersections(segments []Segment) int {
 		if p1.X > p2.X || (p1.X == p2.X && p1.Y > p2.Y) {
 			segmentCopies[i].P1, segmentCopies[i].P2 = p2, p1
 		}
-		heap.Push(&eq, &Event{Point: segmentCopies[i].P1, Type: SegmentStart, Segments: []*Segment{&segmentCopies[i]}})
-		heap.Push(&eq, &Event{Point: segmentCopies[i].P2, Type: SegmentEnd, Segments: []*Segment{&segmentCopies[i]}})
+
+		startEvent := eventPool.Get().(*Event)
+		startEvent.Point = segmentCopies[i].P1
+		startEvent.Type = SegmentStart
+		startEvent.Segments = []*Segment{&segmentCopies[i]}
+		heap.Push(&eq, startEvent)
+
+		endEvent := eventPool.Get().(*Event)
+		endEvent.Point = segmentCopies[i].P2
+		endEvent.Type = SegmentEnd
+		endEvent.Segments = []*Segment{&segmentCopies[i]}
+		heap.Push(&eq, endEvent)
 	}
 
 	status := NewStatus()
 	intersections := 0
+
+	// Pre-allocate the slice used for sorting intersecting segments.
+	// We declare it once outside the loop and reset its length to 0 on each use.
+	// This avoids re-allocating this slice in every intersection event.
+	segsAsSlice := make([]*Segment, 0, 16) // Start with a reasonable capacity
 
 	for eq.Len() > 0 {
 		event := heap.Pop(&eq).(*Event)
@@ -85,6 +111,7 @@ func CountIntersections(segments []Segment) int {
 				nextEvent := heap.Pop(&eq).(*Event)
 				intersectingSegs[nextEvent.Segments[0]] = true
 				intersectingSegs[nextEvent.Segments[1]] = true
+				eventPool.Put(nextEvent)
 			}
 
 			// 2. Count all intersections. If k segments meet at one point,
@@ -94,7 +121,8 @@ func CountIntersections(segments []Segment) int {
 
 			// 3. Find the neighbors of the entire block of intersecting segments
 			// before their order is changed.
-			segsAsSlice := make([]*Segment, 0, k)
+			// Reset the pre-allocated slice instead of making a new one.
+			segsAsSlice = segsAsSlice[:0]
 			for seg := range intersectingSegs {
 				segsAsSlice = append(segsAsSlice, seg)
 			}
@@ -125,6 +153,9 @@ func CountIntersections(segments []Segment) int {
 				checkIntersection(segsAsSlice[k-1], belowBottom, event.Point, &eq) // New bottom vs. old neighbor
 			}
 		}
+
+		// Return the processed event to the pool.
+		eventPool.Put(event)
 	}
 
 	return intersections
@@ -149,7 +180,12 @@ func checkIntersection(s1, s2 *Segment, currentPoint Point, eq *EventQueue) {
 			(math.Abs(p.X-currentPoint.X) < epsilon && p.Y-currentPoint.Y > epsilon)
 
 		if isFutureEvent {
-			heap.Push(eq, &Event{Point: p, Type: Intersection, Segments: []*Segment{s1, s2}})
+			// Get event from the pool.
+			newEvent := eventPool.Get().(*Event)
+			newEvent.Point = p
+			newEvent.Type = Intersection
+			newEvent.Segments = []*Segment{s1, s2}
+			heap.Push(eq, newEvent)
 		}
 	}
 }

@@ -59,9 +59,21 @@ func main() {
 
 ## Performance
 
-Benchmarks confirm the library's theoretical time complexity. The tests were run on an **Apple M1 Pro**.
+Benchmarks confirm the library's optimal `O((n+k) log n)` time complexity. The charts below show how the algorithm's runtime scales with the number of segments (`n`) and the number of intersections (`k`). The log-log scale helps visualize the near-linearithmic relationship.
 
-The `BenchmarkRandomSegments` suite highlights the `O(n log n)` scaling with a sparse number of intersections. The `BenchmarkGridSegments` suite creates a high-contention scenario to highlight the `O(k log n)` scaling, where `k` is the dominant factor.
+*Benchmarks were run on an Apple M1 Pro.*
+
+### Scaling with Number of Segments (`n`)
+
+This test uses randomly generated segments, where `k` is sparse. The runtime scales predictably, demonstrating the `O(n log n)` characteristic.
+
+![Performance Scaling with Number of Segments](benchmark_random.png)
+
+### Scaling with Number of Intersections (`k`)
+
+This test uses a grid of segments to generate a high number of intersections. The runtime scales nearly linearly with `k`, demonstrating the `O(k log n)` characteristic under high-contention scenarios.
+
+![Performance Scaling with Number of Intersections](benchmark_grid.png)
 
 | Benchmark                                                        | Operations | Time/Op      | Memory/Op    | Allocs/Op  |
 | ---------------------------------------------------------------- | ---------- | ------------ | ------------ | ---------- |

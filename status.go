@@ -33,7 +33,7 @@ func (c *sweepLineComparator) getY(seg *Segment) float64 {
 // It compares two segments based on their y-coordinates at the current sweep-line
 // position. If y-coordinates are equal, it uses the segment's slope as a tie-breaker
 // to ensure a consistent and stable ordering.
-func (c *sweepLineComparator) Compare(a, b interface{}) int {
+func (c *sweepLineComparator) Compare(a, b any) int {
 	segA := a.(*Segment)
 	segB := b.(*Segment)
 	yA := c.getY(segA)

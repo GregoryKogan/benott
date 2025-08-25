@@ -141,7 +141,14 @@ func checkIntersection(s1, s2 *Segment, currentPoint Point, eq *EventQueue) {
 		// Only add events that are in the future (to the right of the sweep line,
 		// or on the line but with a greater Y value). This prevents adding
 		// duplicate events or events that have already been processed.
-		if p.X > currentPoint.X || (math.Abs(p.X-currentPoint.X) < epsilon && p.Y > currentPoint.Y) {
+		// This condition is critical to prevent infinite loops from floating-point errors.
+		// A new intersection event is only added if its X-coordinate is *meaningfully*
+		// to the right of the current event's X-coordinate, or if it's on the same
+		// vertical line but *meaningfully* above the current event point.
+		isFutureEvent := (p.X-currentPoint.X > epsilon) ||
+			(math.Abs(p.X-currentPoint.X) < epsilon && p.Y-currentPoint.Y > epsilon)
+
+		if isFutureEvent {
 			heap.Push(eq, &Event{Point: p, Type: Intersection, Segments: []*Segment{s1, s2}})
 		}
 	}

@@ -1,28 +1,36 @@
 package benott
 
-// EventType defines the type of an event.
+// EventType defines the nature of an event in the sweep-line algorithm.
 type EventType int
 
 const (
+	// SegmentStart signifies that the sweep line has reached the left endpoint of a segment.
 	SegmentStart EventType = iota
+	// SegmentEnd signifies that the sweep line has reached the right endpoint of a segment.
 	SegmentEnd
+	// Intersection signifies that the sweep line has reached a point where two or more segments cross.
 	Intersection
 )
 
-// Event represents an event in the sweep-line algorithm.
+// Event represents a significant point in the 2D plane to be processed by the
+// Bentley-Ottmann algorithm. Each event has a location (Point), a Type, and one
+// or more associated Segments.
 type Event struct {
 	Point    Point
 	Type     EventType
-	Segments []*Segment // Holds 1 segment for start/end, 2 for intersection
+	Segments []*Segment // Holds 1 segment for start/end, 2 or more for an intersection.
 }
 
-// EventQueue is a priority queue of events, implemented using container/heap.
+// EventQueue is a min-priority queue of events, implemented using Go's container/heap.
+// Events are ordered primarily by their X-coordinate, then by their Y-coordinate
+// as a tie-breaker. This ensures the sweep-line processes points from left-to-right,
+// bottom-to-top.
 type EventQueue []*Event
 
+// Len returns the number of events in the queue.
 func (eq EventQueue) Len() int { return len(eq) }
 
-// Less compares two events. It sorts primarily by X-coordinate,
-// and secondarily by Y-coordinate as a tie-breaker.
+// Less reports whether the event at index i should be sorted before the event at index j.
 func (eq EventQueue) Less(i, j int) bool {
 	if eq[i].Point.X != eq[j].Point.X {
 		return eq[i].Point.X < eq[j].Point.X
@@ -30,14 +38,17 @@ func (eq EventQueue) Less(i, j int) bool {
 	return eq[i].Point.Y < eq[j].Point.Y
 }
 
+// Swap swaps the events at indices i and j.
 func (eq EventQueue) Swap(i, j int) {
 	eq[i], eq[j] = eq[j], eq[i]
 }
 
+// Push adds an event to the priority queue.
 func (eq *EventQueue) Push(x any) {
 	*eq = append(*eq, x.(*Event))
 }
 
+// Pop removes and returns the event with the lowest value (highest priority) from the queue.
 func (eq *EventQueue) Pop() any {
 	old := *eq
 	n := len(old)

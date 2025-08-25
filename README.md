@@ -76,14 +76,14 @@ This test uses a grid of segments to generate a high number of intersections. Th
 
 | Benchmark                                                        | Operations | Time/Op      | Memory/Op    | Allocs/Op  |
 | ---------------------------------------------------------------- | ---------- | ------------ | ------------ | ---------- |
-| `BenchmarkRandomSegments/N=10`                                   | 234319     | 4372 ns/op   | 3496 B/op    | 85 allocs/op   |
-| `BenchmarkRandomSegments/N=100`                                  | 9804       | 115627 ns/op | 44056 B/op   | 1030 allocs/op |
-| `BenchmarkRandomSegments/N=1000`                                 | 645        | 1851251 ns/op| 433798 B/op  | 9852 allocs/op |
-| `BenchmarkRandomSegments/N=10000`                                | 43         | 29025479 ns/op| 4694687 B/op | 100505 allocs/op|
-| `BenchmarkGridSegments/Grid=10x10_Segments=20_Intersections=100`   | 21450      | 55818 ns/op  | 31624 B/op   | 811 allocs/op  |
-| `BenchmarkGridSegments/Grid=50x50_Segments=100_Intersections=2500` | 745        | 1604035 ns/op| 685324 B/op  | 18013 allocs/op|
-| `BenchmarkGridSegments/Grid=100x100_Segments=200_Intersections=10000`| 165        | 7506986 ns/op| 2691138 B/op | 71014 allocs/op|
-| `BenchmarkGridSegments/Grid=200x200_Segments=400_Intersections=40000`| 36         | 31361110 ns/op| 10661605 B/op| 282015 allocs/op|
+| `BenchmarkRandomSegments/N=10`                                   | 226754     | 5113 ns/op   | 2578 B/op    | 45 allocs/op   |
+| `BenchmarkRandomSegments/N=100`                                  | 14188      | 84862 ns/op  | 21938 B/op   | 340 allocs/op  |
+| `BenchmarkRandomSegments/N=1000`                                 | 728        | 1623540 ns/op| 241283 B/op  | 3766 allocs/op |
+| `BenchmarkRandomSegments/N=10000`                                | 45         | 26450798 ns/op| 2840804 B/op | 38514 allocs/op|
+| `BenchmarkGridSegments/Grid=10x10_Segments=20_Intersections=100`   | 25434      | 46431 ns/op  | 20838 B/op   | 426 allocs/op  |
+| `BenchmarkGridSegments/Grid=50x50_Segments=100_Intersections=2500` | 870        | 1337919 ns/op| 473002 B/op  | 10108 allocs/op|
+| `BenchmarkGridSegments/Grid=100x100_Segments=200_Intersections=10000`| 202        | 5866263 ns/op| 1873693 B/op | 40216 allocs/op|
+| `BenchmarkGridSegments/Grid=200x200_Segments=400_Intersections=40000`| 44         | 25497388 ns/op| 7442644 B/op | 160759 allocs/op|
 
 The results show excellent, predictable scaling in line with the algorithm's optimal complexity.
 

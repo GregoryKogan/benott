@@ -6,16 +6,16 @@ import pandas as pd
 sns.set_theme(style="whitegrid", palette="muted", font_scale=1.2)
 
 # --- Benchmark Data ---
-# This data is taken directly from the benchmark results.
+# This data is taken from the final, hyper-optimized benchmark run.
 random_data = {
     "N": [10, 100, 1000, 10000],
-    "Time/Op (ns)": [4372, 115627, 1851251, 29025479],
+    "Time/Op (ns)": [5113, 84862, 1623540, 26450798],
 }
 
 grid_data = {
     "Segments": [20, 100, 200, 400],
     "Intersections": [100, 2500, 10000, 40000],
-    "Time/Op (ns)": [55818, 1604035, 7506986, 31361110],
+    "Time/Op (ns)": [46431, 1337919, 5866263, 25497388],
 }
 
 # Convert the data into pandas DataFrames for easy plotting.

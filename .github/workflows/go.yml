@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage.out
+          path: coverage.txt
 
       # Step 6: Upload the coverage report to codecov.
       - name: Upload coverage reports to Codecov

@@ -2,7 +2,6 @@
 
 [![Go CI](https://github.com/GregoryKogan/benott/actions/workflows/go.yml/badge.svg)](https://github.com/GregoryKogan/benott/actions)
 [![codecov](https://codecov.io/gh/GregoryKogan/benott/graph/badge.svg)](https://codecov.io/gh/GregoryKogan/benott)
-[![Go Report Card](https://goreportcard.com/badge/github.com/GregoryKogan/benott)](https://goreportcard.com/report/github.com/GregoryKogan/benott)
 [![Go Reference](https://pkg.go.dev/badge/github.com/GregoryKogan/benott.svg)](https://pkg.go.dev/github.com/GregoryKogan/benott)
 
 A blazingly fast, production-ready Go implementation of the [Bentley-Ottmann](https://en.wikipedia.org/wiki/Bentley–Ottmann_algorithm) algorithm for counting line segment intersections.

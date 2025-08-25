@@ -37,7 +37,7 @@ jobs:
       # The `./...` argument ensures that tests in all subdirectories are run.
       # The `-coverprofile` flag generates a code coverage report.
       - name: Run tests and generate coverage
-        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
 
       # Step 5: Upload the coverage report as a build artifact.
       - name: Upload coverage report
@@ -47,5 +47,7 @@ jobs:
           path: coverage.out
 
       # Step 6: Upload the coverage report to codecov.
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}

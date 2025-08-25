@@ -3,7 +3,7 @@ package benott
 import (
 	"math"
 
-	"github.com/emirpasic/gods/trees/redblacktree"
+	rbt "github.com/emirpasic/gods/trees/redblacktree"
 )
 
 type sweepLineComparator struct {
@@ -36,8 +36,20 @@ func (c *sweepLineComparator) Compare(a, b interface{}) int {
 		return 1
 	}
 
-	slopeA := (segA.P2.Y - segA.P1.Y) / (segA.P2.X - segA.P1.X)
-	slopeB := (segB.P2.Y - segB.P1.Y) / (segB.P2.X - segB.P1.X)
+	// Tie-breaking using slope for co-linear segments at the event point.
+	// This ensures a consistent, stable ordering and handles vertical lines.
+	var slopeA, slopeB float64
+	if math.Abs(segA.P2.X-segA.P1.X) < epsilon {
+		slopeA = math.Inf(1) // Vertical slope is infinite
+	} else {
+		slopeA = (segA.P2.Y - segA.P1.Y) / (segA.P2.X - segA.P1.X)
+	}
+	if math.Abs(segB.P2.X-segB.P1.X) < epsilon {
+		slopeB = math.Inf(1)
+	} else {
+		slopeB = (segB.P2.Y - segB.P1.Y) / (segB.P2.X - segB.P1.X)
+	}
+
 	if slopeA < slopeB {
 		return -1
 	}
@@ -48,31 +60,22 @@ func (c *sweepLineComparator) Compare(a, b interface{}) int {
 }
 
 type Status struct {
-	tree       *redblacktree.Tree
+	tree       *rbt.Tree
 	comparator *sweepLineComparator
 }
 
 func NewStatus() *Status {
 	comp := &sweepLineComparator{}
 	return &Status{
-		tree:       redblacktree.NewWith(comp.Compare),
+		tree:       rbt.NewWith(comp.Compare),
 		comparator: comp,
 	}
 }
+func (s *Status) SetX(x float64)      { s.comparator.currentX = x }
+func (s *Status) Add(seg *Segment)    { s.tree.Put(seg, true) }
+func (s *Status) Remove(seg *Segment) { s.tree.Remove(seg) }
 
-func (s *Status) SetX(x float64) {
-	s.comparator.currentX = x
-}
-
-func (s *Status) Add(seg *Segment) {
-	s.tree.Put(seg, true)
-}
-
-func (s *Status) Remove(seg *Segment) {
-	s.tree.Remove(seg)
-}
-
-func findSuccessor(node *redblacktree.Node) *redblacktree.Node {
+func findSuccessor(node *rbt.Node) *rbt.Node {
 	if node.Right != nil {
 		curr := node.Right
 		for curr.Left != nil {
@@ -88,8 +91,7 @@ func findSuccessor(node *redblacktree.Node) *redblacktree.Node {
 	}
 	return p
 }
-
-func findPredecessor(node *redblacktree.Node) *redblacktree.Node {
+func findPredecessor(node *rbt.Node) *rbt.Node {
 	if node.Left != nil {
 		curr := node.Left
 		for curr.Right != nil {
@@ -105,19 +107,16 @@ func findPredecessor(node *redblacktree.Node) *redblacktree.Node {
 	}
 	return p
 }
-
 func (s *Status) FindNeighbors(seg *Segment) (above, below *Segment) {
 	node := s.tree.GetNode(seg)
 	if node == nil {
 		return nil, nil
 	}
-
 	if predNode := findPredecessor(node); predNode != nil {
 		below = predNode.Key.(*Segment)
 	}
 	if succNode := findSuccessor(node); succNode != nil {
 		above = succNode.Key.(*Segment)
 	}
-
 	return above, below
 }

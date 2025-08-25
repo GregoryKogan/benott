@@ -48,13 +48,13 @@ func CountIntersections(segments []Segment) int {
 		startEvent := eventPool.Get().(*Event)
 		startEvent.Point = segmentCopies[i].P1
 		startEvent.Type = SegmentStart
-		startEvent.Segments = []*Segment{&segmentCopies[i]}
+		startEvent.Seg1 = &segmentCopies[i]
 		heap.Push(&eq, startEvent)
 
 		endEvent := eventPool.Get().(*Event)
 		endEvent.Point = segmentCopies[i].P2
 		endEvent.Type = SegmentEnd
-		endEvent.Segments = []*Segment{&segmentCopies[i]}
+		endEvent.Seg1 = &segmentCopies[i]
 		heap.Push(&eq, endEvent)
 	}
 
@@ -75,7 +75,7 @@ func CountIntersections(segments []Segment) int {
 		switch event.Type {
 		case SegmentStart:
 			// A new segment is added to the status.
-			seg := event.Segments[0]
+			seg := event.Seg1
 			status.Add(seg)
 			// Check for intersections with its new neighbors.
 			above, below := status.FindNeighbors(seg)
@@ -88,7 +88,7 @@ func CountIntersections(segments []Segment) int {
 
 		case SegmentEnd:
 			// A segment is removed from the status.
-			seg := event.Segments[0]
+			seg := event.Seg1
 			above, below := status.FindNeighbors(seg)
 			status.Remove(seg)
 			// Its former neighbors are now adjacent; check if they intersect.
@@ -102,15 +102,19 @@ func CountIntersections(segments []Segment) int {
 
 			// 1. Identify all segments involved in intersections at this point.
 			intersectingSegs := make(map[*Segment]bool)
-			intersectingSegs[event.Segments[0]] = true
-			intersectingSegs[event.Segments[1]] = true
+			intersectingSegs[event.Seg1] = true
+			intersectingSegs[event.Seg2] = true
 
 			// Peek at subsequent events in the queue to find all other
 			// intersections happening at this exact coordinate.
 			for eq.Len() > 0 && (*eq[0]).Point == event.Point && (*eq[0]).Type == Intersection {
 				nextEvent := heap.Pop(&eq).(*Event)
-				intersectingSegs[nextEvent.Segments[0]] = true
-				intersectingSegs[nextEvent.Segments[1]] = true
+				intersectingSegs[nextEvent.Seg1] = true
+				intersectingSegs[nextEvent.Seg2] = true
+
+				// When returning to pool, nil out pointers to prevent memory leaks.
+				nextEvent.Seg1 = nil
+				nextEvent.Seg2 = nil
 				eventPool.Put(nextEvent)
 			}
 
@@ -155,6 +159,8 @@ func CountIntersections(segments []Segment) int {
 		}
 
 		// Return the processed event to the pool.
+		event.Seg1 = nil
+		event.Seg2 = nil
 		eventPool.Put(event)
 	}
 
@@ -184,7 +190,8 @@ func checkIntersection(s1, s2 *Segment, currentPoint Point, eq *EventQueue) {
 			newEvent := eventPool.Get().(*Event)
 			newEvent.Point = p
 			newEvent.Type = Intersection
-			newEvent.Segments = []*Segment{s1, s2}
+			newEvent.Seg1 = s1
+			newEvent.Seg2 = s2
 			heap.Push(eq, newEvent)
 		}
 	}

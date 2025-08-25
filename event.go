@@ -16,9 +16,14 @@ const (
 // Bentley-Ottmann algorithm. Each event has a location (Point), a Type, and one
 // or more associated Segments.
 type Event struct {
-	Point    Point
-	Type     EventType
-	Segments []*Segment // Holds 1 segment for start/end, 2 or more for an intersection.
+	// Point is the coordinate in the 2D plane where the event occurs.
+	Point Point
+	// Type is the nature of the event (e.g., SegmentStart, Intersection).
+	Type EventType
+	// Seg1 is the primary segment associated with this event.
+	Seg1 *Segment
+	// Seg2 is the second segment, used only for Intersection events.
+	Seg2 *Segment
 }
 
 // EventQueue is a min-priority queue of events, implemented using Go's container/heap.

@@ -1,0 +1,47 @@
+name: Go CI
+
+on:
+  push:
+    branches: [ "**" ]
+  # Triggers the workflow on pull request events that target the 'main' or 'master' branch.
+  # This is crucial for validating changes before they are merged.
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checks out your repository under $GITHUB_WORKSPACE, so your job can access the code.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Sets up a Go programming environment.
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.24'
+
+      # Step 3: Download Go module dependencies.
+      # Caching dependencies speeds up subsequent builds.
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # Step 4: Run the tests.
+      # The `-v` flag provides verbose output for easier debugging in the Actions log.
+      # The `./...` argument ensures that tests in all subdirectories are run.
+      # The `-coverprofile` flag generates a code coverage report.
+      - name: Run tests and generate coverage
+        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+
+      # Step 5: Upload the coverage report as a build artifact.
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out

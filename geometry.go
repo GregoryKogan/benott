@@ -14,6 +14,11 @@ type Point struct {
 // Segment represents a line segment in 2D space, defined by two endpoints, P1 and P2.
 type Segment struct {
 	P1, P2 Point
+
+	// Pre-calculated fields to speed up `getY` calculations.
+	slope      float64
+	yIntercept float64
+	isVertical bool
 }
 
 // intersection calculates the intersection point of two line segments, s1 and s2.

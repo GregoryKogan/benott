@@ -37,24 +37,39 @@ func CountIntersections(segments []Segment) int {
 	segmentCopies := make([]Segment, len(segments))
 	copy(segmentCopies, segments)
 
-	// Normalize segments so P1 is always the leftmost endpoint.
-	// This simplifies logic within the algorithm.
+	// This single loop correctly normalizes, pre-computes, and creates events
+	// for each segment in a logical, efficient order.
 	for i := range segmentCopies {
-		p1, p2 := segmentCopies[i].P1, segmentCopies[i].P2
-		if p1.X > p2.X || (p1.X == p2.X && p1.Y > p2.Y) {
-			segmentCopies[i].P1, segmentCopies[i].P2 = p2, p1
+		s := &segmentCopies[i] // Use a pointer to modify the copy
+
+		// 1. NORMALIZE FIRST: Ensure P1 is always the leftmost endpoint.
+		if s.P1.X > s.P2.X || (s.P1.X == s.P2.X && s.P1.Y > s.P2.Y) {
+			s.P1, s.P2 = s.P2, s.P1
 		}
 
+		// 2. PRE-COMPUTE SECOND: Calculate properties based on the final, normalized points.
+		p1, p2 := s.P1, s.P2 // Use the now-normalized points
+		if math.Abs(p1.X-p2.X) < epsilon {
+			s.isVertical = true
+			s.slope = math.Inf(1)
+			s.yIntercept = math.NaN() // Not applicable
+		} else {
+			s.isVertical = false // Ensure this is set correctly
+			s.slope = (p2.Y - p1.Y) / (p2.X - p1.X)
+			s.yIntercept = p1.Y - s.slope*p1.X
+		}
+
+		// 3. PUSH EVENTS THIRD: Create and push the start and end events.
 		startEvent := eventPool.Get().(*Event)
-		startEvent.Point = segmentCopies[i].P1
+		startEvent.Point = s.P1
 		startEvent.Type = SegmentStart
-		startEvent.Seg1 = &segmentCopies[i]
+		startEvent.Seg1 = s
 		heap.Push(&eq, startEvent)
 
 		endEvent := eventPool.Get().(*Event)
-		endEvent.Point = segmentCopies[i].P2
+		endEvent.Point = s.P2
 		endEvent.Type = SegmentEnd
-		endEvent.Seg1 = &segmentCopies[i]
+		endEvent.Seg1 = s
 		heap.Push(&eq, endEvent)
 	}
 

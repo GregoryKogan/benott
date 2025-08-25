@@ -16,17 +16,13 @@ type sweepLineComparator struct {
 
 // getY calculates the y-coordinate of a segment at the comparator's currentX.
 func (c *sweepLineComparator) getY(seg *Segment) float64 {
-	if seg.P1.X == seg.P2.X {
+	// Handle pre-calculated vertical segments.
+	if seg.isVertical {
 		return seg.P1.Y
-	}
-	if c.currentX <= seg.P1.X {
-		return seg.P1.Y
-	}
-	if c.currentX >= seg.P2.X {
-		return seg.P2.Y
 	}
 	// Linear interpolation: y = y1 + (x - x1) * (y2 - y1) / (x2 - x1)
-	return seg.P1.Y + (c.currentX-seg.P1.X)*(seg.P2.Y-seg.P1.Y)/(seg.P2.X-seg.P1.X)
+	//  Use the much faster y = mx + b formula.
+	return seg.slope*c.currentX + seg.yIntercept
 }
 
 // Compare implements the github.com/emirpasic/gods/utils.Comparator interface.

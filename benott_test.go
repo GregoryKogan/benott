@@ -1,21 +1,27 @@
 package benott_test
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/GregoryKogan/benott"
 )
 
-// helper function to check results
 func check(t *testing.T, segments []benott.Segment, expected int) {
 	// t.Helper() marks this as a test helper.
 	// When t.Errorf is called, the line number reported
 	// will be from the calling function, not from inside check().
 	t.Helper()
 
-	actual := benott.CountIntersections(segments)
-	if actual != expected {
-		t.Errorf("Expected %d intersections, but got %d", expected, actual)
+	naiveActual := benott.CountIntersectionsNaive(segments)
+	benottActual := benott.CountIntersections(segments)
+	if naiveActual != expected {
+		t.Errorf("Expected %d intersections, but naive method got %d", expected, naiveActual)
+	}
+	if benottActual != expected {
+		t.Errorf("Expected %d intersections, but Bentley-Ottmann got %d", expected, benottActual)
 	}
 }
 
@@ -151,4 +157,49 @@ func TestComplexCaseWithMultipleIntersections(t *testing.T) {
 		{P1: benott.Point{0, 5}, P2: benott.Point{10, 5}},
 	}
 	check(t, segments, 6)
+}
+
+// --- Tests for Naive Implementation and Cross-Validation ---
+
+func TestCountIntersectionsNaive(t *testing.T) {
+	segments := []benott.Segment{
+		{P1: benott.Point{X: 0, Y: 0}, P2: benott.Point{X: 10, Y: 10}},
+		{P1: benott.Point{X: 0, Y: 10}, P2: benott.Point{X: 10, Y: 0}},
+		{P1: benott.Point{X: 5, Y: 0}, P2: benott.Point{X: 5, Y: 10}},
+	}
+	// The 3 segments intersect at one point, creating 3 unique intersection pairs.
+	// The naive algorithm should count these pairs.
+	expected := 3
+	actual := benott.CountIntersectionsNaive(segments)
+	if actual != expected {
+		t.Errorf("Naive implementation failed: expected %d, got %d", expected, actual)
+	}
+}
+
+func TestImplementationsAgainstRandomData(t *testing.T) {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	maxCoord := 1000.0
+
+	testCases := []int{10, 50, 100} // Number of segments to test with
+
+	for _, n := range testCases {
+		t.Run(fmt.Sprintf("N=%d", n), func(t *testing.T) {
+			segments := make([]benott.Segment, n)
+			for i := 0; i < n; i++ {
+				segments[i] = benott.Segment{
+					P1: benott.Point{X: rng.Float64() * maxCoord, Y: rng.Float64() * maxCoord},
+					P2: benott.Point{X: rng.Float64() * maxCoord, Y: rng.Float64() * maxCoord},
+				}
+			}
+
+			// Calculate the result from both implementations.
+			expected := benott.CountIntersectionsNaive(segments)
+			actual := benott.CountIntersections(segments)
+
+			if actual != expected {
+				// This is a critical failure if it ever happens.
+				t.Fatalf("Implementation mismatch! Naive algorithm expected %d intersections, but Bentley-Ottmann algorithm found %d", expected, actual)
+			}
+		})
+	}
 }
